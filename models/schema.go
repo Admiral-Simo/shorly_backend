@@ -10,7 +10,7 @@ type User struct {
 }
 
 type Url struct {
-	ID     string `gorm:"primaryKey" json:"id"`
+	ID     string `gorm:"primaryKey;type:uuid" json:"id"`
 	URL    string `gorm:"not null" json:"url"`
 	UserID int    `gorm:"not null" json:"userID"`
 	User   User   `gorm:"foreignKey:UserID"`
