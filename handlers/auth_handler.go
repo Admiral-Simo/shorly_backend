@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/Admiral-Simo/shortly_backend/db"
+	"github.com/Admiral-Simo/shortly_backend/tools"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -23,25 +24,48 @@ type AuthRequest struct {
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var loginRequest AuthRequest
 	if err := c.BodyParser(&loginRequest); err != nil {
-		return SendError(c, fiber.StatusBadRequest, ErrInvalidRequestBody)
+		return ErrBadRequest()
 	}
 	username, password := loginRequest.Username, loginRequest.Password
 	user, err := h.userStore.CheckUser(username, password)
 	if err != nil {
-		return SendError(c, fiber.StatusBadRequest, fiber.Map{"err": "incorrect username or password"})
+		// Assuming CheckUser returns an error for invalid credentials
+		if err.Error() == "invalid credentials" {
+			return ErrBadRequest()
+		}
+		return ErrInternalServerError()
 	}
+	tokenString := tools.CreateTokenFromUser(user)
+	// i need to set this to the cookies
+	c.Cookie(&fiber.Cookie{
+		Name:     "accessToken",
+		Value:    tokenString,
+		HTTPOnly: true,
+		SameSite: "Strict",
+	})
 	return c.JSON(fiber.Map{"user": user})
 }
 
 func (h *AuthHandler) Signup(c *fiber.Ctx) error {
 	var signupRequest AuthRequest
 	if err := c.BodyParser(&signupRequest); err != nil {
-		return SendError(c, fiber.StatusBadRequest, ErrInvalidRequestBody)
+		return ErrBadRequest()
 	}
 	username, password := signupRequest.Username, signupRequest.Password
 	user, err := h.userStore.CreateUser(username, password)
 	if err != nil {
-		return SendError(c, fiber.StatusConflict, fiber.Map{"err": "user already in signup you might want to login instead"})
+		if err.Error() == "username already taken" {
+			return ErrAlreadyExists("User")
+		}
+		return ErrInternalServerError()
 	}
+	tokenString := tools.CreateTokenFromUser(user)
+	// i need to set this to the cookies
+	c.Cookie(&fiber.Cookie{
+		Name:     "accessToken",
+		Value:    tokenString,
+		HTTPOnly: true,
+		SameSite: "Strict",
+	})
 	return c.JSON(fiber.Map{"user": user})
 }

@@ -11,6 +11,7 @@ import (
 type UserStorer interface {
 	CheckUser(username string, password string) (*models.User, error)
 	CreateUser(username string, password string) (*models.User, error)
+	GetUserById(id int) (*models.User, error)
 }
 
 type userStore struct {
@@ -67,6 +68,19 @@ func (s *userStore) CreateUser(username string, password string) (*models.User, 
 
 	user.Password = ""
 
+	return &user, nil
+}
+
+func (s *userStore) GetUserById(id int) (*models.User, error) {
+	var user models.User
+	if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	user.Password = ""
 	return &user, nil
 }
 

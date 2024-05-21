@@ -5,59 +5,84 @@ import (
 
 	"github.com/Admiral-Simo/shortly_backend/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func setupTestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("failed to connect to database: %v", err)
-	}
-
-	err = db.AutoMigrate(&models.User{})
-	if err != nil {
-		t.Fatalf("failed to migrate database: %v", err)
-	}
-
-	return db
+type UserStoreTestSuite struct {
+	suite.Suite
+	DB        *gorm.DB
+	UserStore UserStorer
 }
 
-func TestCreateUser(t *testing.T) {
-	db := setupTestDB(t)
-	store := NewUserStore(db)
+func (suite *UserStoreTestSuite) SetupTest() {
+	database, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	suite.NoError(err)
 
-	user, err := store.CreateUser("testuser", "testpassword")
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, "testuser", user.Username)
+	err = database.AutoMigrate(&models.User{})
+	suite.NoError(err)
 
-	// Trying to create the same user again should result in an error
-	_, err = store.CreateUser("testuser", "testpassword")
-	assert.Error(t, err)
-	assert.Equal(t, "username already taken", err.Error())
+	suite.DB = database
+	suite.UserStore = NewUserStore(database)
 }
 
-func TestCheckUser(t *testing.T) {
-	db := setupTestDB(t)
-	store := NewUserStore(db)
+func (suite *UserStoreTestSuite) TestCreateUser() {
+	user, err := suite.UserStore.CreateUser("testuser", "password123")
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), user)
+	assert.Equal(suite.T(), "testuser", user.Username)
+	assert.Empty(suite.T(), user.Password)
 
-	_, err := store.CreateUser("testuser", "testpassword")
-	assert.NoError(t, err)
+	// Try creating a user with the same username
+	user, err = suite.UserStore.CreateUser("testuser", "password123")
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), user)
+	assert.Equal(suite.T(), "username already taken", err.Error())
+}
 
-	// Valid user and password
-	user, err := store.CheckUser("testuser", "testpassword")
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, "testuser", user.Username)
+func (suite *UserStoreTestSuite) TestCheckUser() {
+	// Create a user to test CheckUser
+	_, err := suite.UserStore.CreateUser("testuser", "password123")
+	assert.NoError(suite.T(), err)
 
-	// Invalid password
-	_, err = store.CheckUser("testuser", "wrongpassword")
-	assert.Error(t, err)
-	assert.Equal(t, "invalid password", err.Error())
+	user, err := suite.UserStore.CheckUser("testuser", "password123")
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), user)
+	assert.Equal(suite.T(), "testuser", user.Username)
+	assert.Empty(suite.T(), user.Password)
 
-	// Non-existing user
-	_, err = store.CheckUser("nonexistent", "testpassword")
-	assert.Error(t, err)
-	assert.Equal(t, "user not found", err.Error())
+	// Check with wrong password
+	user, err = suite.UserStore.CheckUser("testuser", "wrongpassword")
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), user)
+	assert.Equal(suite.T(), "invalid password", err.Error())
+
+	// Check with non-existing user
+	user, err = suite.UserStore.CheckUser("nonexisting", "password123")
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), user)
+	assert.Equal(suite.T(), "user not found", err.Error())
+}
+
+func (suite *UserStoreTestSuite) TestGetUserById() {
+	// Create a user to test GetUserById
+	createdUser, err := suite.UserStore.CreateUser("testuser", "password123")
+	assert.NoError(suite.T(), err)
+
+	user, err := suite.UserStore.GetUserById(createdUser.ID)
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), user)
+	assert.Equal(suite.T(), "testuser", user.Username)
+	assert.Empty(suite.T(), user.Password)
+
+	// Get non-existing user
+	user, err = suite.UserStore.GetUserById(999)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), user)
+	assert.Equal(suite.T(), "user not found", err.Error())
+}
+
+func TestUserStoreTestSuite(t *testing.T) {
+	suite.Run(t, new(UserStoreTestSuite))
 }
