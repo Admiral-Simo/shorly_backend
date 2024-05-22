@@ -49,7 +49,8 @@ func main() {
 	// protected by middleware
 	app.Use(handlers.JWTAuthentication(userStore))
 
-	app.Get("/:id", urlHandler.GetUrl)
+	app.Get("/get/:id", urlHandler.GetUrl)
+	app.Get("/get", urlHandler.GetUrls)
 	app.Post("/save", urlHandler.SaveUrl)
 
 	app.Listen(":8080")

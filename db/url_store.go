@@ -2,12 +2,14 @@ package db
 
 import (
 	"github.com/Admiral-Simo/shortly_backend/models"
+	"github.com/Admiral-Simo/shortly_backend/tools"
 	"gorm.io/gorm"
 )
 
 type UrlStorer interface {
 	GetUrls(userID int) ([]*models.Url, error)
-	CreateUrl(userID int, url string, hash string) (*models.Url, error)
+	GetUrl(userID int, hash string) (*models.Url, error)
+	CreateUrl(userID int, url string) (*models.Url, error)
 }
 
 type urlStore struct {
@@ -26,7 +28,9 @@ func (s *urlStore) GetUrls(userID int) ([]*models.Url, error) {
 	return urls, nil
 }
 
-func (s *urlStore) CreateUrl(userID int, url string, hash string) (*models.Url, error) {
+func (s *urlStore) CreateUrl(userID int, url string) (*models.Url, error) {
+	// make a random 6 digit hash here
+	hash := tools.CreateUrlHash()
 	newUrl := &models.Url{
 		ID:     hash,
 		URL:    url,
@@ -36,4 +40,12 @@ func (s *urlStore) CreateUrl(userID int, url string, hash string) (*models.Url, 
 		return nil, err
 	}
 	return newUrl, nil
+}
+
+func (s *urlStore) GetUrl(userID int, hash string) (*models.Url, error) {
+	var url *models.Url
+	if err := s.db.Where("user_id = ? AND id = ?", userID, hash).First(&url).Error; err != nil {
+		return nil, err
+	}
+	return url, nil
 }
