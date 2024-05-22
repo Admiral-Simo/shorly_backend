@@ -58,13 +58,7 @@ func (h *UrlHandler) GetUrls(c *fiber.Ctx) error {
 
 func (h *UrlHandler) GetUrl(c *fiber.Ctx) error {
 	hash := c.Params("id")
-	user := c.Locals("user").(*models.User)
-	if user == nil {
-		fmt.Println("the save url is not having any user")
-		return ErrInternalServerError()
-	}
-	userID := user.ID // userID
-	url, err := h.urlStore.GetUrl(userID, hash)
+	url, err := h.urlStore.GetUrl(hash)
 	if err != nil {
 		return ErrInternalServerError()
 	}

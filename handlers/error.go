@@ -57,3 +57,8 @@ func ErrAlreadyExists(resource string) *Error {
 func ErrInternalServerError() *Error {
 	return NewError(fiber.StatusInternalServerError, "internal server error")
 }
+
+func NotFoundHandler(c *fiber.Ctx) error {
+	errorResponse := ErrNotFound(c.OriginalURL())
+	return c.Status(errorResponse.Code).JSON(errorResponse)
+}

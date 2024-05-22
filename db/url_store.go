@@ -8,7 +8,7 @@ import (
 
 type UrlStorer interface {
 	GetUrls(userID int) ([]*models.Url, error)
-	GetUrl(userID int, hash string) (*models.Url, error)
+	GetUrl(hash string) (*models.Url, error)
 	CreateUrl(userID int, url string) (*models.Url, error)
 }
 
@@ -42,9 +42,9 @@ func (s *urlStore) CreateUrl(userID int, url string) (*models.Url, error) {
 	return newUrl, nil
 }
 
-func (s *urlStore) GetUrl(userID int, hash string) (*models.Url, error) {
+func (s *urlStore) GetUrl(hash string) (*models.Url, error) {
 	var url *models.Url
-	if err := s.db.Where("user_id = ? AND id = ?", userID, hash).First(&url).Error; err != nil {
+	if err := s.db.Where("id = ?", hash).First(&url).Error; err != nil {
 		return nil, err
 	}
 	return url, nil
