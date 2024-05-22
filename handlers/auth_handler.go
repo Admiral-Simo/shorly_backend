@@ -33,7 +33,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		if err.Error() == "invalid credentials" {
 			return ErrBadRequest()
 		}
-		return ErrInternalServerError()
+		return ErrInvalidCredentials()
 	}
 	tokenString := tools.CreateTokenFromUser(user)
 	// i need to set this to the cookies

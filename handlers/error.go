@@ -38,6 +38,10 @@ func ErrInvalidId() *Error {
 	return NewError(fiber.StatusBadRequest, "invalid id given")
 }
 
+func ErrInvalidCredentials() *Error {
+	return NewError(fiber.StatusBadRequest, "invalid crendentials given")
+}
+
 func ErrBadRequest() *Error {
 	return NewError(fiber.StatusBadRequest, "invalid JSON request")
 }
