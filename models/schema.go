@@ -7,10 +7,11 @@ import (
 )
 
 type User struct {
-	ID       int    `gorm:"primaryKey" json:"id"`
-	Username string `gorm:"uniqueIndex;not null" json:"username"`
-	Password string `gorm:"not null" json:"-"`
-	Urls     []Url  `gorm:"foreignKey:UserID" json:"-"`
+	ID        int       `gorm:"primaryKey" json:"id"`
+	Username  string    `gorm:"uniqueIndex;not null" json:"username"`
+	Password  string    `gorm:"not null" json:"-"`
+	CreatedAt time.Time `gorm:"default:current_timestamp" json:"-"`
+	Urls      []Url     `gorm:"foreignKey:UserID" json:"-"`
 }
 
 type Url struct {
