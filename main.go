@@ -51,6 +51,9 @@ func main() {
 	app.Use(handlers.JWTAuthentication(userStore))
 	app.Get("/get", urlHandler.GetUrls)
 	app.Post("/save", urlHandler.SaveUrl)
+	app.Get("/check_authentication", func(c *fiber.Ctx) error {
+		return c.SendStatus(200)
+	})
 
 	app.Use(handlers.NotFoundHandler)
 
