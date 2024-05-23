@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/Admiral-Simo/shortly_backend/db"
 	"github.com/Admiral-Simo/shortly_backend/handlers"
@@ -52,6 +53,18 @@ func main() {
 	app.Get("/get", urlHandler.GetUrls)
 	app.Post("/save", urlHandler.SaveUrl)
 	app.Get("/check_authentication", func(c *fiber.Ctx) error {
+		return c.SendStatus(200)
+	})
+	app.Get("/logout", func(c *fiber.Ctx) error {
+		// Remove the cookie
+		c.Cookie(&fiber.Cookie{
+			Name:     "accessToken",              // Replace with your cookie name
+			Value:    "",                         // Set an empty value
+			Expires:  time.Now().Add(-time.Hour), // Expire the cookie immediately
+			HTTPOnly: true,                       // Ensure the cookie is HTTP only
+		})
+
+		// Redirect or return a response as needed
 		return c.SendStatus(200)
 	})
 
