@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
 	ID       int    `gorm:"primaryKey" json:"id"`
@@ -10,10 +14,11 @@ type User struct {
 }
 
 type Url struct {
-	ID     string `gorm:"primaryKey" json:"id"`
-	URL    string `gorm:"not null" json:"url"`
-	UserID int    `gorm:"not null" json:"-"`
-	User   User   `gorm:"foreignKey:UserID" json:"-"`
+	ID        string    `gorm:"primaryKey" json:"id"`
+	URL       string    `gorm:"not null" json:"url"`
+	UserID    int       `gorm:"not null" json:"-"`
+	CreatedAt time.Time `gorm:"default:current_timestamp" json:"-"`
+	User      User      `gorm:"foreignKey:UserID" json:"-"`
 }
 
 // AutoMigrate will migrate the database schema for the models
